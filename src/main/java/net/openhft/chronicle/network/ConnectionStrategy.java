@@ -13,6 +13,8 @@ import java.net.Socket;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static net.openhft.chronicle.core.io.Closeable.closeQuietly;
 
@@ -70,7 +72,7 @@ public interface ConnectionStrategy extends Marshallable {
     /**
      * @param name                  the name of the connection, only used for logging
      * @param socketAddressSupplier
-     * @param didLogIn              was the last attempt successfull, was a login established
+     * @param didLogIn              was the last attempt successful, was a login established
      * @param fatalFailureMonitor
      * @return
      * @throws InterruptedException
@@ -108,7 +110,8 @@ public interface ConnectionStrategy extends Marshallable {
         for (; ; ) {
             if (Thread.currentThread().isInterrupted())
                 throw new InterruptedException();
-            if (start + timeoutMs < System.currentTimeMillis()) {
+            long startMs = System.currentTimeMillis();
+            if (start + timeoutMs < startMs) {
                 Jvm.warn().on(ConnectionStrategy.class, "Timed out attempting to connect to " + socketAddress);
                 return null;
             }
@@ -116,7 +119,16 @@ public interface ConnectionStrategy extends Marshallable {
             if (sc != null)
                 return sc;
             Thread.yield();
+            // If nothing is listening, socketChannel returns pretty much immediately so we support a pause here
+            pauseBeforeReconnect(startMs);
         }
+    }
+
+    default void pauseBeforeReconnect(long startMs) {
+        long pauseMillis = (startMs + pauseMillisBeforeReconnect()) - System.currentTimeMillis();
+        if (Jvm.isDebugEnabled(this.getClass()))
+            Jvm.debug().on(this.getClass(), "Waiting for reconnect " + pauseMillis + " ms");
+        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(pauseMillis));
     }
 
     /**

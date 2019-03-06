@@ -169,6 +169,11 @@ public class TcpEventHandler implements EventHandler, Closeable, TcpEventHandler
         }
     }
 
+    @Nullable
+    public TcpHandler tcpHandler() {
+        return tcpHandler;
+    }
+
     @Override
     public void tcpHandler(TcpHandler tcpHandler) {
         nc.onHandlerChanged(tcpHandler);
@@ -219,7 +224,7 @@ public class TcpEventHandler implements EventHandler, Closeable, TcpEventHandler
                 LOG.trace("inBB is full, can't read from socketChannel");
             if (read > 0) {
                 WanSimulator.dataRead(read);
-                tcpHandler.onReadTime(System.nanoTime());
+                tcpHandler.onReadTime(System.nanoTime(), inBB, start, inBB.position());
                 lastTickReadTime = System.currentTimeMillis();
                 readLog.log(inBB, start, inBB.position());
                 if (invokeHandler())
@@ -414,7 +419,7 @@ public class TcpEventHandler implements EventHandler, Closeable, TcpEventHandler
         long writeTime = System.nanoTime();
         assert !sc.isBlocking();
         int wrote = sc.write(outBB);
-        tcpHandler.onWriteTime(writeTime);
+        tcpHandler.onWriteTime(writeTime, outBB, start, outBB.position());
 
         bytesWriteCount += (outBB.position() - start);
         writeLog.log(outBB, start, outBB.position());

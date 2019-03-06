@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.time.Instant;
 
 /**
@@ -88,16 +89,19 @@ public final class SslDelegatingTcpHandler<N extends SslNetworkContext>
      * {@inheritDoc}
      */
     @Override
-    public void onReadTime(final long readTimeNS) {
-        delegate.onReadTime(readTimeNS);
+    public void onReadTime(final long readTimeNS, final ByteBuffer inBB, final int position, final int limit) {
+        delegate.onReadTime(readTimeNS, inBB, position, limit);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void onWriteTime(final long writeTimeNS) {
-        delegate.onWriteTime(writeTimeNS);
+    public void onWriteTime(final long writeTimeNS,
+                            final ByteBuffer byteBuffer,
+                            final int position
+            , final int limit) {
+        delegate.onWriteTime(writeTimeNS, byteBuffer, position, limit);
     }
 
     /**

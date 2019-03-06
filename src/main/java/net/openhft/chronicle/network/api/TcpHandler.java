@@ -23,6 +23,8 @@ import net.openhft.chronicle.network.NetworkContext;
 import net.openhft.chronicle.network.api.session.SessionDetailsProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.ByteBuffer;
+
 /*
  * Created by peter.lawrey on 22/01/15.
  */
@@ -48,10 +50,13 @@ public interface TcpHandler<N extends NetworkContext> extends ClientClosedProvid
     default void close() {
     }
 
-    default void onReadTime(long readTimeNS) {
+    default void onReadTime(long readTimeNS, final ByteBuffer inBB, final int position, final int limit) {
     }
 
-    default void onWriteTime(long writeTimeNS) {
+    default void onWriteTime(long writeTimeNS,
+                             final ByteBuffer byteBuffer,
+                             final int start,
+                             final int position) {
     }
 
     default void onReadComplete() {

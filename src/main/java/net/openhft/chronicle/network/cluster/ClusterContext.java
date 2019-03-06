@@ -50,11 +50,26 @@ public abstract class ClusterContext implements Demarshallable, Marshallable, Co
     private String clusterName;
     private byte localIdentifier;
     private ServerThreadingStrategy serverThreadingStrategy;
+    private long retryInterval = 1_000L;
+    private String procPrefix;
 
     @UsedViaReflection
     protected ClusterContext(@NotNull WireIn wire) throws IORuntimeException {
         readMarshallable(wire);
     }
+
+    protected ClusterContext() {
+        defaults();
+    }
+
+    public String procPrefix() {
+        return procPrefix;
+    }
+
+    public void procPrefix(String procPrefix) {
+        this.procPrefix = procPrefix;
+    }
+
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
@@ -64,10 +79,6 @@ public abstract class ClusterContext implements Demarshallable, Marshallable, Co
             if (wire.bytes().readRemaining() > 0)
                 wireParser().parseOne(wire);
         }
-    }
-
-    protected ClusterContext() {
-        defaults();
     }
 
     public Function<ClusterContext, NetworkStatsListener> networkStatsListenerFactory() {
@@ -264,6 +275,15 @@ public abstract class ClusterContext implements Demarshallable, Marshallable, Co
         result.add(handler.apply(this, hd));
         result.add(heartbeat.apply(this));
         return result;
+    }
+
+    public long retryInterval() {
+        return retryInterval;
+    }
+
+    public ClusterContext retryInterval(final long retryInterval) {
+        this.retryInterval = retryInterval;
+        return this;
     }
 }
 
